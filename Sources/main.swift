@@ -3,7 +3,7 @@
 
 import AppKit
 
-func printImage(_ image: NSImage) async {
+func printImage(_ image: NSImage)  {
     // Create a temporary file path
 
     let name = UUID().uuidString
@@ -26,76 +26,59 @@ func getCursor(cursor: NSCursor) -> String {
     let image = cursor.image.tiffRepresentation!
     let count = image.count
 
-    if count == 7132 {
+    switch count {
+    case 7132:
         return "dragLink"
-    }
-    else if count == 85056 {
+    case 85056:
         return "iBeam"
-    }
-    else if count == 204152{
+    case 204152:
         return "arrow"
-    }
-    else if count == 20892 {
-        let valAtIndex4703 = image[4703]
-        if valAtIndex4703 == 18 {
+    case 20892:
+        switch image[4703] {
+        case 18:
             return "pointing hand"
-        }
-        else if valAtIndex4703 == 0 {
+        case 0:
             return "closed hand"
-        }
-        else if valAtIndex4703 == 2 {
+        case 2:
             return "open hand"
-        }
-        else {
+        default:
             return "unknown"
         }
-    }
-    else if count == 11932 {
+    case 11932:
         let valAtIndex3587 = image[3587]
-        if valAtIndex3587 == 16 {
+        switch valAtIndex3587 {
+        case 16:
             return "resizeLeft"
-        }
-        else if valAtIndex3587 == 242 {
+        case 242:
             return "resizeRight"
-        }
-        else if valAtIndex3587 == 243 {
+        case 243:
             return "resizeLeftRight"
-        }
-        else if valAtIndex3587 == 116 {
+        case 116:
             return "resizeUp"
-        }
-        else if valAtIndex3587 == 5 {
+        case 5:
             return "resizeDown"
-        }
-        else if valAtIndex3587 == 117 {
+        case 117:
             return "resizeUpDown"
-        }
-        else if valAtIndex3587 == 0 {
+        case 0:
             return "crosshair"
-        }
-        else {
+        default:
             return "unknown"
         }
-    }
-    else if count == 22812 {
+    case 22812:
         let valAtIndex8164 = image[8164]
-        if valAtIndex8164 == 237 {
+        switch valAtIndex8164 {
+        case 237:
             return "disappearingItem"
-        }
-        else if valAtIndex8164 == 183 {
+        case 183:
             return "operationNotAllowed"
-        }
-        else if valAtIndex8164 == 81 {
+        case 81:
             return "dragCopy"
-        }
-        else if valAtIndex8164 == 173 {
+        case 173:
             return "contextualMenu"
-        }
-        else {
+        default:
             return "unknown"
         }
-    }
-    else {
+    default:
         return "unknown"
     }
 }
@@ -139,12 +122,12 @@ func allCursors() async {
 }
 */
 
-func getCursorType() async {
+func getCursorType()  {
     let cursor = NSCursor.currentSystem!
-    await printImage(cursor.image)
+     printImage(cursor.image)
 
     let myCursor = getCursor(cursor: cursor)
     print(myCursor)
 }
 
-await getCursorType()
+getCursorType()
