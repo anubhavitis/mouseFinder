@@ -29,8 +29,13 @@ func getCursor(cursor: NSCursor) -> String {
     if count == 7132 {
         return "dragLink"
     }
-
-    if count == 20892 {
+    else if count == 85056 {
+        return "iBeam"
+    }
+    else if count == 204152{
+        return "arrow"
+    }
+    else if count == 20892 {
         let valAtIndex4703 = image[4703]
         if valAtIndex4703 == 18 {
             return "pointing hand"
@@ -138,8 +143,8 @@ func getCursorType() async {
     let cursor = NSCursor.currentSystem!
     await printImage(cursor.image)
 
-    print(getCursor(cursor: cursor))
-
+    let myCursor = getCursor(cursor: cursor)
+    print(myCursor)
 }
 
 await getCursorType()
