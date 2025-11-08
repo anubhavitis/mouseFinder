@@ -2,132 +2,141 @@
 // https://docs.swift.org/swift-book
 
 import AppKit
+import ObjectiveC
 
-func printImage(_ image: NSImage)  {
+func printImage(_ image: NSImage) {
     // Create a temporary file path
-
     let name = UUID().uuidString
-    let filePath = "./"+name+".png"
+    let filePath = "./" + name + ".png"
 
-    // print name of image
-
-    // Save the image to the temporary file
+    // Try tiffRepresentation first (most cursors)
     if let data = image.tiffRepresentation,
-       let imageRep = NSBitmapImageRep(data: data),
-       let pngData = imageRep.representation(using: .png, properties: [:]) {
+        let imageRep = NSBitmapImageRep(data: data),
+        let pngData = imageRep.representation(using: .png, properties: [:])
+    {
         try? pngData.write(to: URL(fileURLWithPath: filePath), options: .atomic)
+        print("Image saved to: \(filePath)")
+        return
     }
 
-    // Print the file path
-    print("Image saved to: \(filePath)")
+    // Fallback: render the image directly for cursors without tiffRepresentation
+    let size = image.size
+    guard size.width > 0 && size.height > 0 else {
+        print("Image has invalid size")
+        return
+    }
+
+    let bitmapRep = NSBitmapImageRep(
+        bitmapDataPlanes: nil,
+        pixelsWide: Int(size.width),
+        pixelsHigh: Int(size.height),
+        bitsPerSample: 8,
+        samplesPerPixel: 4,
+        hasAlpha: true,
+        isPlanar: false,
+        colorSpaceName: .deviceRGB,
+        bytesPerRow: 0,
+        bitsPerPixel: 0
+    )
+
+    guard let bitmapRep = bitmapRep else {
+        print("Failed to create bitmap representation")
+        return
+    }
+
+    NSGraphicsContext.saveGraphicsState()
+    NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: bitmapRep)
+    image.draw(at: .zero, from: NSRect(origin: .zero, size: size), operation: .copy, fraction: 1.0)
+    NSGraphicsContext.restoreGraphicsState()
+
+    if let pngData = bitmapRep.representation(using: .png, properties: [:]) {
+        try? pngData.write(to: URL(fileURLWithPath: filePath), options: .atomic)
+        print("Image saved to: \(filePath)")
+    } else {
+        print("Failed to generate PNG data")
+    }
 }
 
 func getCursor(cursor: NSCursor) -> String {
-    let image = cursor.image.tiffRepresentation!
-    let count = image.count
+    let size = cursor.image.size
+    let hotSpot = cursor.hotSpot
 
-    switch count {
-    case 7132:
-        return "dragLink"
-    case 85056:
-        return "iBeam"
-    case 204152:
+    if size.width == 23 && size.height == 22 && hotSpot.x == 12 && hotSpot.y == 11 {
+        return "ibeam"
+    } else if size.width == 28 && size.height == 40 && hotSpot.x == 5 && hotSpot.y == 5 {
         return "arrow"
-    case 20892:
-        switch image[4703] {
-        case 18:
-            return "pointing hand"
-        case 0:
-            return "closed hand"
-        case 2:
-            return "open hand"
-        default:
-            return "unknown"
-        }
-    case 11932:
-        let valAtIndex3587 = image[3587]
-        switch valAtIndex3587 {
-        case 16:
-            return "resizeLeft"
-        case 242:
-            return "resizeRight"
-        case 243:
-            return "resizeLeftRight"
-        case 116:
-            return "resizeUp"
-        case 5:
-            return "resizeDown"
-        case 117:
-            return "resizeUpDown"
-        case 0:
-            return "crosshair"
-        default:
-            return "unknown"
-        }
-    case 22812:
-        let valAtIndex8164 = image[8164]
-        switch valAtIndex8164 {
-        case 237:
-            return "disappearingItem"
-        case 183:
-            return "operationNotAllowed"
-        case 81:
-            return "dragCopy"
-        case 173:
-            return "contextualMenu"
-        default:
-            return "unknown"
-        }
-    default:
+    } else if size.width == 32 && size.height == 32 && hotSpot.x == 13 && hotSpot.y == 8 {
+        return "pointingHand"
+    } else {
         return "unknown"
     }
 }
 
-/*
 func allCursors() async {
-    // arrow and ibeam not found.
-
-
-    let _group20892 = [
-        // found unique set at index 4703, 4707, 4711,
-        NSCursor.pointingHand, // count: 20892 [4703]: 18
-        NSCursor.closedHand, // count: 20892 [4703]: 0
-        NSCursor.openHand, // count: 20892 [4703]: 2
+    // ibeam and arrow have no tiffRepresentation
+    let allCursors = [
+        NSCursor.iBeam,
+        NSCursor.arrow,
+        NSCursor.dragLink,  // 4372537072
+        NSCursor.pointingHand,  // 4372537152
+        NSCursor.closedHand,  // 4372537328
+        NSCursor.openHand,  // 4372537376
+        NSCursor.resizeLeft,  // 4372537424
+        NSCursor.resizeRight,  // 4372537472
+        NSCursor.resizeUp,  // 4372537520
+        NSCursor.resizeDown,  // 4372537568
+        NSCursor.crosshair,  // 4372537616
+        NSCursor.resizeUpDown,  // 4372537664
+        NSCursor.resizeLeftRight,  // 4372537712
+        NSCursor.disappearingItem,  // 4372537760
+        NSCursor.operationNotAllowed,  // 4372537808
+        NSCursor.dragCopy,  // 4372537856
+        NSCursor.contextualMenu,  // 4372537904
     ]
 
+    for index in 0..<allCursors.count {
+        let cursor = allCursors[index]
+        let image = cursor.image
 
-    let _group11932 = [
-        // found unique set at index 3587, 5839, 5891, etc
-        NSCursor.resizeLeft, // count: 11932 [3587]: 16
-        NSCursor.resizeRight, // count: 11932 [3587]: 242   
-        NSCursor.resizeLeftRight, // count: 11932 [3587]: 243   
-        NSCursor.resizeUp, // count: 11932 [3587]: 116      
-        NSCursor.resizeDown, // count: 11932 [3587]: 5
-        NSCursor.resizeUpDown, // count: 11932 [3587]: 117
-        NSCursor.crosshair, // count: 11932 [3587]: 0
-    ]
+        print("image at \(index)")
+        printImage(image)
 
-
-    let _group22812 = [
-        // found unique set at index 8164, 8165, 8166 etc
-        NSCursor.disappearingItem, // count: 22812 [8164]: 237
-        NSCursor.operationNotAllowed, // count: 22812 [8164]: 183
-        NSCursor.dragCopy, // count: 22812 [8164]: 81
-        NSCursor.contextualMenu, // count: 22812 [8164]: 173
-    ]
-
-    let _group7132 = [
-        NSCursor.dragLink.image.tiffRepresentation!, // count: 7132
-    ]
+        sleep(2)
+    }
 }
-*/
 
-func getCursorType()  {
+func cursorToString(_ cursor: NSCursor) -> String {
+    var result = "NSCursor {\n"
+    result += "  hotSpot: (\(cursor.hotSpot.x), \(cursor.hotSpot.y))\n"
+    result += "  image.size: (\(cursor.image.size.width) x \(cursor.image.size.height))\n"
+    result += "  cursor hash: \(cursor.hash)\n"
+
+    if let tiffData = cursor.image.tiffRepresentation {
+        result += "  tiffRepresentation.count: \(tiffData.count) bytes\n"
+    } else {
+        result += "  tiffRepresentation: nil\n"
+    }
+
+    result += "}"
+    return result
+}
+
+func test() {
     let cursor = NSCursor.currentSystem!
-     printImage(cursor.image)
+    print(cursorToString(cursor))
+    printImage(cursor.image)
+}
 
+func main() async {
+    // add sleep for 2 sec
+    // sleep(3)
+    // test()
+    // getCursorType()
+
+    let cursor = NSCursor.currentSystem!
+    print(cursorToString(cursor))
     let myCursor = getCursor(cursor: cursor)
     print(myCursor)
 }
 
-getCursorType()
+await main()
